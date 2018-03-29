@@ -34,6 +34,10 @@ Set the variables in "index.js" directly.
 # string name with quotes
 
 const username = process.env.username || 'daksh'
+# e.g - const username = process.env.username || <username>
+
 const password = process.env.password || 'password123'
+# e.g - const password = process.env.password || <password>
+
 
 ```
