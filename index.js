@@ -1,8 +1,11 @@
 const oracledb = require('oracledb');
-const username = process.env.username || '<your_user_name>'
-const password = process.env.password || '<your_oracle_password>'
 const express = require('express')
 const app = express()
+
+const username = process.env.username || '<your_user_name>'
+const password = process.env.password || '<your_oracle_password>'
+const dbuser = process.env.dbuser || 'manika.'
+
 
 queryExecuteWithOracle = (query, params, applyFunction) => {
 
@@ -13,6 +16,7 @@ queryExecuteWithOracle = (query, params, applyFunction) => {
   .then(result => applyFunction(result))
   .then(result => result)
   .catch(err => {
+    console.log(err)
     return {
       "error": err,
       "type": "Some kind of error occured with query/connection pooling"
@@ -27,7 +31,7 @@ transform = (result) => {
 }
 
 app.get('/test', (req, res) => {
-  queryExecuteWithOracle('select * from city', [], transform)
+  queryExecuteWithOracle(`select * from ${dbuser}city`, [], transform)
   .then((result) => {
     res.send({
       "result": result
