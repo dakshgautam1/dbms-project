@@ -41,3 +41,9 @@ const password = process.env.password || 'password123'
 
 
 ```
+### Running the server
+
+After forking the repository. Go to the folder. Run this command. 
+
+```
+npm start
