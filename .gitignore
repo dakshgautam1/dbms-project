@@ -1,2 +1,4 @@
 node_modules
 .DS_Store
+references.txt
+dummy.js
