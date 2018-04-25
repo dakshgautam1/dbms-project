@@ -17,7 +17,7 @@ const {
 // Add headers
 app.use(function(req, res, next) {
   // Website you wish to allow to connect
-  res.setHeader("Access-Control-Allow-Origin", "http://localhost:3000");
+  res.setHeader("Access-Control-Allow-Origin", "*");
 
   // Request methods you wish to allow
   res.setHeader(
@@ -118,15 +118,73 @@ app.get("/test", (req, res) => {
     });
 });
 
+transformWeatherPageData = (results) => {
+  if (results.length === 0) {
+    return {
+      error: "No data found !"
+    };
+  }
+  console.log(results)
+  let title, 
+      yAxisName, 
+      xAxisName, 
+      unit, 
+      seriesTitle,
+      cityName1,
+      cityName2;
 
-app.post("/test1", (req, res) => {
+  // let data = [];
 
-  const query = `select * from ((select LAST_DAY(TO_DATE(x || y || '-01', 'YYYY-MM-DD')) as w_date, city_name, s1, pn1, mv1, mh1, aqi1 from (select to_char(po_date, 'yyyy') as x, to_char(po_date, 'mm') as y, city_name as city_name, symbol as s1, pollutant_name as pn1, avg(mean_value) as mv1, max(max_value) as mx1, avg(max_hour) as mh1, avg(aqi) as aqi1 from manika.city NATURAL JOIN MANIKA.IS_POLLUTED_BY NATURAL JOIN MANIKA.POLLUTANT where city_name=:city1 and symbol = 'NO2' and pollutant_name = 'Nitrogen Dioxide' group by to_char(po_date, 'yyyy'), to_char(po_date, 'mm'), city_name, symbol, pollutant_name order by to_char(po_date, 'yyyy'))) NATURAL JOIN (select LAST_DAY(TO_DATE(x || y || '-01', 'YYYY-MM-DD')) as w_date, city_name, s2, pn2, mv2, mh2, aqi2 from (select to_char(po_date, 'yyyy') as x, to_char(po_date, 'mm') as y, city_name as city_name, symbol as s2, pollutant_name as pn2, avg(mean_value) as mv2, max(max_value) as mx2, avg(max_hour) as mh2, avg(aqi) as aqi2 from manika.city NATURAL JOIN MANIKA.IS_POLLUTED_BY NATURAL JOIN MANIKA.POLLUTANT where city_name=:city2 and symbol = 'SO2' and pollutant_name = 'Sulfur Dioxide' group by to_char(po_date, 'yyyy'), to_char(po_date, 'mm'), city_name, symbol, pollutant_name order by to_char(po_date, 'yyyy'))) NATURAL JOIN (select LAST_DAY(TO_DATE(x || y || '-01', 'YYYY-MM-DD')) as w_date, city_name, s3, pn3, mv3, mh3, aqi3 from (select to_char(po_date, 'yyyy') as x, to_char(po_date, 'mm') as y, city_name as city_name, symbol as s3, pollutant_name as pn3, avg(mean_value) as mv3, max(max_value) as mx3, avg(max_hour) as mh3, avg(aqi) as aqi3 from manika.city NATURAL JOIN MANIKA.IS_POLLUTED_BY NATURAL JOIN MANIKA.POLLUTANT where city_name=:city3 and symbol = 'O3' and pollutant_name = 'Ozone' group by to_char(po_date, 'yyyy'), to_char(po_date, 'mm'), city_name, symbol, pollutant_name order by to_char(po_date, 'yyyy'))) NATURAL JOIN (select LAST_DAY(TO_DATE(x || y || '-01', 'YYYY-MM-DD')) as w_date, city_name, s4, pn4, mv4, mh4, aqi4 from (select to_char(po_date, 'yyyy') as x, to_char(po_date, 'mm') as y, city_name as city_name, symbol as s4, pollutant_name as pn4, avg(mean_value) as mv4, max(max_value) as mx4, avg(max_hour) as mh4, avg(aqi) as aqi4 from manika.city NATURAL JOIN MANIKA.IS_POLLUTED_BY NATURAL JOIN MANIKA.POLLUTANT where city_name=:city4 and symbol = 'CO' and pollutant_name = 'Carbon Monoxide' group by to_char(po_date, 'yyyy'), to_char(po_date, 'mm'), city_name, symbol, pollutant_name order by to_char(po_date, 'yyyy')))) WHERE w_date BETWEEN TO_DATE (:d1, 'mm/dd/yyyy') AND TO_DATE (:d2, 'mm/dd/yyyy')`
-  queryExecuteWithOracle(query, ['New York', 'New York','New York','New York', '02/28/2014', '02/28/2014'], transform)
+  unit = results[0][2];
+  cityName1 = results[0][4];
+  cityName2 = results[0][6];
+  title = `${results[0][1]} Comparison between ${cityName1} and ${cityName2}`;
+  yAxisName = `${results[0][1]} ( ${unit} )`;
+  seriesTitle = `${title} for the range specified Range`;
+
+  let city1Data = results.map(value => {
+    let d = new Date(value[0]);
+       return [
+      Date.UTC(d.getFullYear(), d.getUTCMonth(), d.getUTCDate()),
+      value[3]
+    ];
+  })
+
+  let city2Data = results.map(value => {
+    let d = new Date(value[0]);
+       return [
+      Date.UTC(d.getFullYear(), d.getUTCMonth(), d.getUTCDate()),
+      value[5]
+    ];
+  })
+  
+  
+  return {
+    title: title,
+    name1: cityName1,
+    data1: city1Data,
+    name2: cityName2,
+    data2: city2Data,
+    xAxisName: "Year",
+    yAxisName: yAxisName,
+    unit: unit,
+  };
+}
+app.post('/get-two-cities-data', (req, res) => {
+  console.log('hot tow ceities')
+  if ('city_name1' in req.body && 'city_name2' in req.body && 'aspect' in req.body && 'start_date' in req.body && 'end_date' in req.body) {
+    let city_name1 = req.body.city_name1;
+    let city_name2 = req.body.city_name2;
+    let aspect = req.body.aspect;
+    let start_date = req.body.start_date;
+    let end_date = req.body.end_date;
+    console.log(start_date, end_date)
+    let query = `select to_char(w_date, 'mm/dd/yyyy') as w_date, aspect, unit, m1, c1, m2, c2 from ((select LAST_DAY(TO_DATE(x || y || '-01', 'YYYY-MM-DD')) as w_date, m1, c1, aspect, unit from (select to_char(w_date, 'yyyy') as x, to_char(w_date, 'mm') as y, avg(metric_value) as m1, city_name as c1, aspect, unit from MANIKA.CITY NATURAL JOIN MANIKA.IS_AFFECTED_BY NATURAL JOIN MANIKA.WEATHER where aspect = :asp1 and city_name= :city1 group by to_char(w_date, 'yyyy'), to_char(w_date, 'mm'), city_name, aspect, unit order by to_char(w_date, 'yyyy'))) NATURAL JOIN (select LAST_DAY(TO_DATE(x || y || '-01', 'YYYY-MM-DD')) as w_date, m2, c2, aspect, unit from (select to_char(w_date, 'yyyy') as x, to_char(w_date, 'mm') as y, avg(metric_value) as m2, city_name as c2, aspect, unit from MANIKA.CITY NATURAL JOIN MANIKA.IS_AFFECTED_BY NATURAL JOIN MANIKA.WEATHER where aspect = :asp2 and city_name= :city2 group by to_char(w_date, 'yyyy'), to_char(w_date, 'mm'), city_name, aspect, unit order by to_char(w_date, 'yyyy')))) where w_date BETWEEN TO_DATE (:d1, 'mm/dd/yyyy') AND TO_DATE (:d2, 'mm/dd/yyyy')`;
+    queryExecuteWithOracle(query, [aspect, city_name1, aspect, city_name2,start_date, end_date], passResults)
     .then(result => {
-      console.log(result)
+      let newR = transformWeatherPageData(result)
       res.send({
-        result: result
+        result: newR
       });
     })
     .catch(err => {
@@ -134,6 +192,64 @@ app.post("/test1", (req, res) => {
         error: "Some error with the connection setup"
       });
     });
+  }
+})
+
+app.post("/get-city-aspects", (req, res) => {
+
+  console.log(req.body, "i am here")
+  if (true) {
+    let city_name = req.body.city_name
+    let start_date = req.body.start_date;
+    let end_date = req.body.end_date;
+    const query = `select to_char(w_date, 'mm/dd/yyyy') as w_date, city_name, a1, u1, m1, a2, u2, m2, a3, u3, m3, a4, u4, m4, a5, u5, m5  from ((select LAST_DAY(TO_DATE(x || y || '-01', 'YYYY-MM-DD')) as w_date, city_name, a1, u1, m1 from (select to_char(w_date, 'yyyy') as x, to_char(w_date, 'mm') as y,city_name,  avg(metric_value) as m1 , aspect as a1, unit as u1 from MANIKA.CITY NATURAL JOIN MANIKA.IS_AFFECTED_BY NATURAL JOIN MANIKA.WEATHER where aspect = :as1 and city_name=:city group by to_char(w_date, 'yyyy'), to_char(w_date, 'mm'), city_name, aspect, unit order by to_char(w_date, 'yyyy'))) NATURAL JOIN (select LAST_DAY(TO_DATE(x || y || '-01', 'YYYY-MM-DD')) as w_date, city_name, a2, u2, m2 from (select to_char(w_date, 'yyyy') as x, to_char(w_date, 'mm') as y,city_name,  avg(metric_value) as m2 , aspect as a2, unit as u2 from MANIKA.CITY NATURAL JOIN MANIKA.IS_AFFECTED_BY NATURAL JOIN MANIKA.WEATHER where aspect = :as2 and city_name=:city group by to_char(w_date, 'yyyy'), to_char(w_date, 'mm'), city_name, aspect, unit order by to_char(w_date, 'yyyy'))) NATURAL JOIN (select LAST_DAY(TO_DATE(x || y || '-01', 'YYYY-MM-DD')) as w_date, city_name, a3, u3, m3 from (select to_char(w_date, 'yyyy') as x, to_char(w_date, 'mm') as y,city_name,  avg(metric_value) as m3 , aspect as a3, unit as u3 from MANIKA.CITY NATURAL JOIN MANIKA.IS_AFFECTED_BY NATURAL JOIN MANIKA.WEATHER where aspect = :as3 and city_name=:city group by to_char(w_date, 'yyyy'), to_char(w_date, 'mm'), city_name, aspect, unit order by to_char(w_date, 'yyyy'))) NATURAL JOIN (select LAST_DAY(TO_DATE(x || y || '-01', 'YYYY-MM-DD')) as w_date, city_name, a4, u4, m4 from (select to_char(w_date, 'yyyy') as x, to_char(w_date, 'mm') as y,city_name,  avg(metric_value) as m4 , aspect as a4, unit as u4 from MANIKA.CITY NATURAL JOIN MANIKA.IS_AFFECTED_BY NATURAL JOIN MANIKA.WEATHER where aspect = :as4 and city_name=:city group by to_char(w_date, 'yyyy'), to_char(w_date, 'mm'), city_name, aspect, unit order by to_char(w_date, 'yyyy'))) NATURAL JOIN (select LAST_DAY(TO_DATE(x || y || '-01', 'YYYY-MM-DD')) as w_date, city_name, a5, u5, m5 from (select to_char(w_date, 'yyyy') as x, to_char(w_date, 'mm') as y,city_name,  avg(metric_value) as m5 , aspect as a5, unit as u5 from MANIKA.CITY NATURAL JOIN MANIKA.IS_AFFECTED_BY NATURAL JOIN MANIKA.WEATHER where aspect = :as5 and city_name=:city group by to_char(w_date, 'yyyy'), to_char(w_date, 'mm'), city_name, aspect, unit order by to_char(w_date, 'yyyy')))) WHERE w_date BETWEEN TO_DATE (:d1, 'mm/dd/yyyy') AND TO_DATE (:d2, 'mm/dd/yyyy')`    
+    queryExecuteWithOracle(query, ['Humidity', 'New York', 'Temperature', 'New York', 'Pressure', 'New York', 'Wind Speed', 'New York', 'Wind Direction', 'New York','28/02/2013', '28/02/2013'], passResults)
+      .then(result => {
+        console.log(result)
+        res.send({
+          result: result
+        });
+      })
+      .catch(err => {
+        res.send({
+          error: "Some error with the connection setup"
+        });
+      });
+  } else {
+    return res.send({
+      error: "Low number of attributes"
+    })
+  }
+
+});
+
+app.post("/test1", (req, res) => {
+
+  console.log(req.body, "i am here")
+  if ('city_name' in req.body && 'start_date' in req.body && 'end_date' in req.body) {
+    let city_name = req.body.city_name
+    let start_date = req.body.start_date;
+    let end_date = req.body.end_date;
+    
+    const query = `select to_char(w_date, 'mm/dd/yyyy') as w_date, city_name, s1, pn1, mv1, mx1, mh1, aqi1, s2, pn2, mv2, mx2, mh2, aqi2, s3, pn3, mv3, mx3, mh3, aqi3,s4, pn4, mv4, mx4, mh4, aqi4 from ((select LAST_DAY(TO_DATE(x || y || '-01', 'YYYY-MM-DD')) as w_date, city_name, s1, pn1, mv1, mx1, mh1, aqi1 from (select to_char(po_date, 'yyyy') as x, to_char(po_date, 'mm') as y, city_name as city_name, symbol as s1, pollutant_name as pn1, avg(mean_value) as mv1, max(max_value) as mx1, avg(max_hour) as mh1, avg(aqi) as aqi1 from manika.city NATURAL JOIN MANIKA.IS_POLLUTED_BY NATURAL JOIN MANIKA.POLLUTANT where city_name=:city1 and symbol = 'NO2' and pollutant_name = 'Nitrogen Dioxide' group by to_char(po_date, 'yyyy'), to_char(po_date, 'mm'), city_name, symbol, pollutant_name order by to_char(po_date, 'yyyy'))) NATURAL JOIN (select LAST_DAY(TO_DATE(x || y || '-01', 'YYYY-MM-DD')) as w_date, city_name, s2, pn2, mv2, mx2, mh2, aqi2 from (select to_char(po_date, 'yyyy') as x, to_char(po_date, 'mm') as y, city_name as city_name, symbol as s2, pollutant_name as pn2, avg(mean_value) as mv2, max(max_value) as mx2, avg(max_hour) as mh2, avg(aqi) as aqi2 from manika.city NATURAL JOIN MANIKA.IS_POLLUTED_BY NATURAL JOIN MANIKA.POLLUTANT where city_name=:city2 and symbol = 'SO2' and pollutant_name = 'Sulfur Dioxide' group by to_char(po_date, 'yyyy'), to_char(po_date, 'mm'), city_name, symbol, pollutant_name order by to_char(po_date, 'yyyy'))) NATURAL JOIN (select LAST_DAY(TO_DATE(x || y || '-01', 'YYYY-MM-DD')) as w_date, city_name, s3, pn3, mv3, mx3, mh3, aqi3 from (select to_char(po_date, 'yyyy') as x, to_char(po_date, 'mm') as y, city_name as city_name, symbol as s3, pollutant_name as pn3, avg(mean_value) as mv3, max(max_value) as mx3, avg(max_hour) as mh3, avg(aqi) as aqi3 from manika.city NATURAL JOIN MANIKA.IS_POLLUTED_BY NATURAL JOIN MANIKA.POLLUTANT where city_name=:city3 and symbol = 'O3' and pollutant_name = 'Ozone' group by to_char(po_date, 'yyyy'), to_char(po_date, 'mm'), city_name, symbol, pollutant_name order by to_char(po_date, 'yyyy'))) NATURAL JOIN (select LAST_DAY(TO_DATE(x || y || '-01', 'YYYY-MM-DD')) as w_date, city_name, s4, pn4, mv4, mx4, mh4, aqi4 from (select to_char(po_date, 'yyyy') as x, to_char(po_date, 'mm') as y, city_name as city_name, symbol as s4, pollutant_name as pn4, avg(mean_value) as mv4, max(max_value) as mx4, avg(max_hour) as mh4, avg(aqi) as aqi4 from manika.city NATURAL JOIN MANIKA.IS_POLLUTED_BY NATURAL JOIN MANIKA.POLLUTANT where city_name=:city4 and symbol = 'CO' and pollutant_name = 'Carbon Monoxide' group by to_char(po_date, 'yyyy'), to_char(po_date, 'mm'), city_name, symbol, pollutant_name order by to_char(po_date, 'yyyy')))) WHERE w_date BETWEEN TO_DATE (:d1, 'mm/dd/yyyy') AND TO_DATE (:d2, 'mm/dd/yyyy')`
+    queryExecuteWithOracle(query, [city_name, city_name, city_name, city_name, start_date, end_date], passResults)
+      .then(result => {
+        let newR = transformResultForPollutant(result);
+        res.send({
+          result: newR
+        });
+      })
+      .catch(err => {
+        res.send({
+          error: "Some error with the connection setup"
+        });
+      });
+  } else {
+    return res.send({
+      error: "Low number of attributes"
+    })
+  }
+
 });
 
 transformToCityJson = result => {
@@ -544,7 +660,6 @@ transformTwoAttributes = results => {
   let title, yAxisName, xAxisName, att1, att1Unit, att2, att2Unit, cityName;
 
   // let data = [];
-  console.log("yaha aa gya mein")
 
   att1 = results[0][2];
   att1Unit = results[0][3];
@@ -554,7 +669,6 @@ transformTwoAttributes = results => {
 
   yAxisName = `${att1} (${att1Unit}) and ${att2} (${att2Unit})`
   title = `${cityName} : ${att1} V/S ${att2}`
-  console.log(results, 'ither')
 
   let attData1 = results.map(value => {
     var d = new Date(value[1]);
@@ -564,7 +678,6 @@ transformTwoAttributes = results => {
     ];
   })
 
-  console.log(attData1)
   let attData2 = results.map(value => {
     var d = new Date(value[1]);
     return [
@@ -573,7 +686,6 @@ transformTwoAttributes = results => {
     ];
   })
 
-console.log(title)
   let re =  {
     title: title,
     name1: `${att1} (${att1Unit})`,
@@ -675,3 +787,180 @@ transformTwoCityResult = (results) => {
   };
 }
 
+
+transformResultForPollutant = (result) => {
+  console.log(result[0])
+
+  if (result.length === 0) {
+    return {
+      error: "No data found !"
+    };
+  }
+
+
+  let title, yAxisName, xAxisName, pName1, pSymbol1, pName2, pSymbol2, pName3, pSymbol3, pName4, pSymbol4, cityName;
+
+
+  cityName = result[0][1]
+  pName1 = result[0][3]
+  pSymbol1 = result[0][2]
+
+  pName2 = result[0][9]
+  pSymbol2 = result[0][8]
+
+  pName3 = result[0][15]
+  pSymbol3 = result[0][14]
+
+  pName4 = result[0][21]
+  pSymbol4 = result[0][20]
+  console.log('cam here', pName1, pName2, pName3, pName4)
+
+
+
+  yAxisName = `${pName1} (${pSymbol1}) and ${pName2} (${pSymbol2}) and ${pName3} (${pSymbol3}) and ${pName4} (${pSymbol4})`
+
+  title = `${cityName} : ${pSymbol1} V/S ${pSymbol2} V/S ${pSymbol3} V/S ${pSymbol4}`
+
+  let pData1 = result.map(value => {
+    var d = new Date(value[0]);
+    return [
+      Date.UTC(d.getFullYear(), d.getUTCMonth(), d.getUTCDate()),
+      value[4]
+    ];
+  })
+
+  let pData2 = result.map(value => {
+    var d = new Date(value[0]);
+    return [
+      Date.UTC(d.getFullYear(), d.getUTCMonth(), d.getUTCDate()),
+      value[5]
+    ];
+  })
+  let pData3 = result.map(value => {
+    var d = new Date(value[0]);
+    return [
+      Date.UTC(d.getFullYear(), d.getUTCMonth(), d.getUTCDate()),
+      value[6]
+    ];
+  })
+  let pData4 = result.map(value => {
+    var d = new Date(value[0]);
+    return [
+      Date.UTC(d.getFullYear(), d.getUTCMonth(), d.getUTCDate()),
+      value[7]
+    ];
+  })
+  let pData5 = result.map(value => {
+    var d = new Date(value[0]);
+    return [
+      Date.UTC(d.getFullYear(), d.getUTCMonth(), d.getUTCDate()),
+      value[10]
+    ];
+  })
+  let pData6 = result.map(value => {
+    var d = new Date(value[0]);
+    return [
+      Date.UTC(d.getFullYear(), d.getUTCMonth(), d.getUTCDate()),
+      value[11]
+    ];
+  })
+  let pData7 = result.map(value => {
+    var d = new Date(value[0]);
+    return [
+      Date.UTC(d.getFullYear(), d.getUTCMonth(), d.getUTCDate()),
+      value[12]
+    ];
+  })
+  let pData8 = result.map(value => {
+    var d = new Date(value[0]);
+    return [
+      Date.UTC(d.getFullYear(), d.getUTCMonth(), d.getUTCDate()),
+      value[13]
+    ];
+  })
+  let pData9 = result.map(value => {
+    var d = new Date(value[0]);
+    return [
+      Date.UTC(d.getFullYear(), d.getUTCMonth(), d.getUTCDate()),
+      value[16]
+    ];
+  })
+  let pData10 = result.map(value => {
+    var d = new Date(value[0]);
+    return [
+      Date.UTC(d.getFullYear(), d.getUTCMonth(), d.getUTCDate()),
+      value[17]
+    ];
+  })
+  let pData11 = result.map(value => {
+    var d = new Date(value[0]);
+    return [
+      Date.UTC(d.getFullYear(), d.getUTCMonth(), d.getUTCDate()),
+      value[18]
+    ];
+  })
+  let pData12 = result.map(value => {
+    var d = new Date(value[0]);
+    return [
+      Date.UTC(d.getFullYear(), d.getUTCMonth(), d.getUTCDate()),
+      value[19]
+    ];
+  })
+  let pData13 = result.map(value => {
+    var d = new Date(value[0]);
+    return [
+      Date.UTC(d.getFullYear(), d.getUTCMonth(), d.getUTCDate()),
+      value[22]
+    ];
+  })
+  let pData14 = result.map(value => {
+    var d = new Date(value[0]);
+    return [
+      Date.UTC(d.getFullYear(), d.getUTCMonth(), d.getUTCDate()),
+      value[23]
+    ];
+  })
+  let pData15 = result.map(value => {
+    var d = new Date(value[0]);
+    return [
+      Date.UTC(d.getFullYear(), d.getUTCMonth(), d.getUTCDate()),
+      value[24]
+    ];
+  })
+  let pData16 = result.map(value => {
+    var d = new Date(value[0]);
+    return [
+      Date.UTC(d.getFullYear(), d.getUTCMonth(), d.getUTCDate()),
+      value[25]
+    ];
+  })
+  
+  let re =  {
+    title: title,
+    name1: `${pName1} (${pSymbol1})`,
+    name2: `${pName2} (${pSymbol2})`,
+    name3: `${pName3} (${pSymbol3})`,
+    name4: `${pName4} (${pSymbol4})`,
+
+    xAxisName: "Year",
+    yAxisName: yAxisName,
+
+    data1: pData1,
+    data2: pData2,
+    data3: pData3,
+    data4: pData4,
+    data5: pData5,
+    data6: pData6,
+    data7: pData7,
+    data8: pData8,
+    data9: pData9,
+    data10: pData10,
+    data11: pData12,
+    data13: pData13,
+    data14: pData14,
+    data15: pData15,
+    data16: pData16,
+  };
+
+  return re;
+}
