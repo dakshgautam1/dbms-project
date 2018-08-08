@@ -616,6 +616,629 @@ app.post('/add-row', (req, res) => {
     })
   }
 });
+/////////////// Chris D's Code
+
+app.post('/get-query', (req, res) => {
+
+  if ('query' in req.body) {
+    let query = req.body.query;
+    queryExecuteWithOracle(query,[],passResults)
+      .then((result) => {
+        console.log("ASDFASDF");
+        console.log(result);
+      
+        res.send({
+          "result": result[0][0]
+        })
+      })
+      .catch(err => {
+        res.send({
+          "error": "Some error with the connection setup"
+        })
+      })
+    } else {
+      res.send({
+        "error": "No query found !"
+      })
+    }
+ 
+ });
+ 
+function treatCityWeather(result) {
+
+  // Treat Decimals
+  result.humi_13 = parseFloat(parseFloat(Math.round(parseFloat(result.humi_13) * 100) / 100).toFixed(3));
+  result.humi_14 = parseFloat(parseFloat(Math.round(parseFloat(result.humi_14) * 100) / 100).toFixed(3));
+  result.humi_15 = parseFloat(parseFloat(Math.round(parseFloat(result.humi_15) * 100) / 100).toFixed(3));
+  result.pres_13 = parseFloat(parseFloat(Math.round(parseFloat(result.pres_13) * 100) / 100).toFixed(3));
+  result.pres_14 = parseFloat(parseFloat(Math.round(parseFloat(result.pres_14) * 100) / 100).toFixed(3));
+  result.pres_15 = parseFloat(parseFloat(Math.round(parseFloat(result.pres_15) * 100) / 100).toFixed(3));
+  result.temp_13 = parseFloat(parseFloat(Math.round(parseFloat(result.temp_13) * 100) / 100).toFixed(3));
+  result.temp_14 = parseFloat(parseFloat(Math.round(parseFloat(result.temp_14) * 100) / 100).toFixed(3));
+  result.temp_15 = parseFloat(parseFloat(Math.round(parseFloat(result.temp_15) * 100) / 100).toFixed(3));
+  result.direc_13 = parseFloat(parseFloat(Math.round(parseFloat(result.direc_13) * 100) / 100).toFixed(3));
+  result.direc_14 = parseFloat(parseFloat(Math.round(parseFloat(result.direc_14) * 100) / 100).toFixed(3));
+  result.direc_15 = parseFloat(parseFloat(Math.round(parseFloat(result.direc_15) * 100) / 100).toFixed(3));
+  result.spe_13 = parseFloat(parseFloat(Math.round(parseFloat(result.spe_13) * 100) / 100).toFixed(3));
+  result.spe_14 = parseFloat(parseFloat(Math.round(parseFloat(result.spe_14) * 100) / 100).toFixed(3));
+  result.spe_15 = parseFloat(parseFloat(Math.round(parseFloat(result.spe_15) * 100) / 100).toFixed(3));
+
+  return result;
+}
+
+function passCityWeather(result) {
+
+  return {
+    humi_13: result[0][2],
+    humi_14: result[1][2],
+    humi_15: result[2][2],
+    pres_13: result[3][2],
+    pres_14: result[4][2],
+    pres_15: result[5][2],
+    temp_13: result[6][2],
+    temp_14: result[7][2],
+    temp_15: result[8][2],
+    direc_13: result[9][2],
+    direc_14: result[10][2],
+    direc_15: result[11][2],
+    spe_13: result[12][2],
+    spe_14: result[13][2],
+    spe_15: result[14][2]
+  }
+  
+}
+
+function treatCityPollution(result) {
+
+  result.no2_avg_13 = parseFloat(parseFloat(Math.round(parseFloat(result.no2_avg_13) * 100) / 100).toFixed(3));
+  result.no2_avg_14 = parseFloat(parseFloat(Math.round(parseFloat(result.no2_avg_14) * 100) / 100).toFixed(3));
+  result.no2_avg_15 = parseFloat(parseFloat(Math.round(parseFloat(result.no2_avg_15) * 100) / 100).toFixed(3));
+  result.no2_max_13 = parseFloat(parseFloat(Math.round(parseFloat(result.no2_max_13) * 100) / 100).toFixed(3));
+  result.no2_max_14 = parseFloat(parseFloat(Math.round(parseFloat(result.no2_max_14) * 100) / 100).toFixed(3));
+  result.no2_max_15 = parseFloat(parseFloat(Math.round(parseFloat(result.no2_max_15) * 100) / 100).toFixed(3));
+  result.no2_aqi_13 = parseFloat(parseFloat(Math.round(parseFloat(result.no2_aqi_13) * 100) / 100).toFixed(3));
+  result.no2_aqi_14 = parseFloat(parseFloat(Math.round(parseFloat(result.no2_aqi_14) * 100) / 100).toFixed(3));
+  result.no2_aqi_15 = parseFloat(parseFloat(Math.round(parseFloat(result.no2_aqi_15) * 100) / 100).toFixed(3));
+
+  result.o3_avg_13 = parseFloat(parseFloat(Math.round(parseFloat(result.o3_avg_13) * 100) / 100).toFixed(3));
+  result.o3_avg_14 = parseFloat(parseFloat(Math.round(parseFloat(result.o3_avg_14) * 100) / 100).toFixed(3));
+  result.o3_avg_15 = parseFloat(parseFloat(Math.round(parseFloat(result.o3_avg_15) * 100) / 100).toFixed(3));
+
+  result.o3_max_13 = parseFloat(parseFloat(Math.round(parseFloat(result.o3_max_13) * 100) / 100).toFixed(3));
+  result.o3_max_14 = parseFloat(parseFloat(Math.round(parseFloat(result.o3_max_14) * 100) / 100).toFixed(3));
+  result.o3_max_15 = parseFloat(parseFloat(Math.round(parseFloat(result.o3_max_15) * 100) / 100).toFixed(3));
+
+  result.o3_aqi_13 = parseFloat(parseFloat(Math.round(parseFloat(result.o3_aqi_13) * 100) / 100).toFixed(3));
+  result.o3_aqi_14 = parseFloat(parseFloat(Math.round(parseFloat(result.o3_aqi_14) * 100) / 100).toFixed(3));
+  result.o3_aqi_15 = parseFloat(parseFloat(Math.round(parseFloat(result.o3_aqi_15) * 100) / 100).toFixed(3));
+
+  result.so2_avg_13 = parseFloat(parseFloat(Math.round(parseFloat(result.so2_avg_13) * 100) / 100).toFixed(3));
+  result.so2_avg_14 = parseFloat(parseFloat(Math.round(parseFloat(result.so2_avg_14) * 100) / 100).toFixed(3));
+  result.so2_avg_15 = parseFloat(parseFloat(Math.round(parseFloat(result.so2_avg_15) * 100) / 100).toFixed(3));
+
+  result.so2_max_13 = parseFloat(parseFloat(Math.round(parseFloat(result.so2_max_13) * 100) / 100).toFixed(3));
+  result.so2_max_14 = parseFloat(parseFloat(Math.round(parseFloat(result.so2_max_14) * 100) / 100).toFixed(3));
+  result.so2_max_15 = parseFloat(parseFloat(Math.round(parseFloat(result.so2_max_15) * 100) / 100).toFixed(3));
+
+  result.so2_aqi_13 = parseFloat(parseFloat(Math.round(parseFloat(result.so2_aqi_13) * 100) / 100).toFixed(3));
+  result.so2_aqi_14 = parseFloat(parseFloat(Math.round(parseFloat(result.so2_aqi_14) * 100) / 100).toFixed(3));
+  result.so2_aqi_15 = parseFloat(parseFloat(Math.round(parseFloat(result.so2_aqi_15) * 100) / 100).toFixed(3));
+
+  result.co_avg_13 = parseFloat(parseFloat(Math.round(parseFloat(result.co_avg_13) * 100) / 100).toFixed(3));
+  result.co_avg_14 = parseFloat(parseFloat(Math.round(parseFloat(result.co_avg_14) * 100) / 100).toFixed(3));
+  result.co_avg_15 = parseFloat(parseFloat(Math.round(parseFloat(result.co_avg_15) * 100) / 100).toFixed(3));
+
+  result.co_max_13 = parseFloat(parseFloat(Math.round(parseFloat(result.co_max_13) * 100) / 100).toFixed(3));
+  result.co_max_14 = parseFloat(parseFloat(Math.round(parseFloat(result.co_max_14) * 100) / 100).toFixed(3));
+  result.co_max_15 = parseFloat(parseFloat(Math.round(parseFloat(result.co_max_15) * 100) / 100).toFixed(3));
+
+  result.co_aqi_13 = parseFloat(parseFloat(Math.round(parseFloat(result.co_aqi_13) * 100) / 100).toFixed(3));
+  result.co_aqi_14 = parseFloat(parseFloat(Math.round(parseFloat(result.co_aqi_14) * 100) / 100).toFixed(3));
+  result.co_aqi_15 = parseFloat(parseFloat(Math.round(parseFloat(result.co_aqi_15) * 100) / 100).toFixed(3));
+
+  return(result);
+}
+
+function passCityPollution(result) {
+
+  return {
+    no2_avg_14: result[0][2],
+    no2_max_14: result[0][3],
+    no2_aqi_14: result[0][5],
+    o3_avg_14: result[1][2],
+    o3_max_14: result[1][3],
+    o3_aqi_14: result[1][5],
+    so2_avg_14: result[2][2],
+    so2_max_14: result[2][3],
+    so2_aqi_14: result[2][5],
+    co_avg_14: result[3][2],
+    co_max_14: result[3][3],
+    co_aqi_14: result[3][5],
+    no2_avg_13: result[4][2],
+    no2_max_13: result[4][3],
+    no2_aqi_13: result[4][5],
+    o3_avg_13: result[5][2],
+    o3_max_13: result[5][3],
+    o3_aqi_13: result[5][5],
+    so2_avg_13: result[6][2],
+    so2_max_13: result[6][3],
+    so2_aqi_13: result[6][5],
+    co_avg_13: result[7][2],
+    co_max_13: result[7][3],
+    co_aqi_13: result[7][5],
+    no2_avg_15: result[8][2],
+    no2_max_15: result[8][3],
+    no2_aqi_15: result[8][5],
+    o3_avg_15: result[9][2],
+    o3_max_15: result[9][3],
+    o3_aqi_15: result[9][5],
+    so2_avg_15: result[10][2],
+    so2_max_15: result[10][3],
+    so2_aqi_15: result[10][5],
+    co_avg_15: result[11][2],
+    co_max_15: result[11][3],
+    co_aqi_15: result[11][5],
+  }
+}
+
+function passHottest(result) {
+  
+  return {
+    hot_date: result[0][0],
+    hot_val: result[0][1]
+  }
+}
+
+function treatHottest(result) {
+
+  result.hot_val = parseFloat(parseFloat(Math.round(parseFloat(result.hot_val) * 100) / 100).toFixed(3));
+  result.hot_val = result.hot_val + " F";
+
+  var yyyy = result.hot_date.getFullYear(); 
+  var dd = result.hot_date.getDate();
+  var mm = result.hot_date.getMonth() + 1;
+
+  if (dd < 10) {
+    dd = '0' + dd;
+  }
+
+  if (mm < 10) {
+    mm = '0'+mm;
+  }
+
+  result.hot_date = yyyy + '-' + mm + '-' + dd;
+
+  return result;
+}
+
+function passColdest(result) {
+  
+  return {
+    cold_date: result[0][0],
+    cold_val: result[0][1]
+  }
+}
+
+function treatColdest(result) {
+
+  result.cold_val = parseFloat(parseFloat(Math.round(parseFloat(result.cold_val) * 100) / 100).toFixed(3));
+  result.cold_val = result.cold_val + " F";
+
+  var yyyy = result.cold_date.getFullYear(); 
+  var dd = result.cold_date.getDate();
+  var mm = result.cold_date.getMonth() + 1;
+
+  if (dd < 10) {
+    dd = '0' + dd;
+  }
+
+  if (mm < 10) {
+    mm = '0'+mm;
+  }
+
+  result.cold_date = yyyy + '-' + mm + '-' + dd;
+
+  return result;
+}
+
+function passDry(result) {
+  return {
+    dry_date: result[0][0],
+    dry_val: result[0][1]
+  }
+}
+
+function treatDry(result) {
+  result.dry_val = parseFloat(parseFloat(Math.round(parseFloat(result.dry_val) * 100) / 100).toFixed(3));
+  result.dry_val = result.dry_val + "% (Humidity)";
+
+  var yyyy = result.dry_date.getFullYear(); 
+  var dd = result.dry_date.getDate();
+  var mm = result.dry_date.getMonth() + 1;
+
+  if (dd < 10) {
+    dd = '0' + dd;
+  }
+
+  if (mm < 10) {
+    mm = '0'+mm;
+  }
+
+  result.dry_date = yyyy + '-' + mm + '-' + dd;
+
+  return result;
+}
+
+function passWind(result) {
+  return {
+    wind_date: result[0][0],
+    wind_val: result[0][1]
+  }
+}
+
+function treatWind(result) {
+  result.wind_val = parseFloat(parseFloat(Math.round(parseFloat(result.wind_val) * 100) / 100).toFixed(3));
+  result.wind_val = result.wind_val + " mph";
+
+  var yyyy = result.wind_date.getFullYear(); 
+  var dd = result.wind_date.getDate();
+  var mm = result.wind_date.getMonth() + 1;
+
+  if (dd < 10) {
+    dd = '0' + dd;
+  }
+
+  if (mm < 10) {
+    mm = '0'+mm;
+  }
+
+  result.wind_date = yyyy + '-' + mm + '-' + dd;
+
+  return result;
+}
+
+app.post('/get-city-weather', (req, res) => {
+
+  let body = req.body;
+
+  if ('city_name' in req.body) {
+
+    var today = new Date();
+    var dd = today.getDate();
+    var mm = today.getMonth() + 1;
+
+    if (dd < 10) {
+      dd = '0' + dd;
+    }
+
+    if (mm < 10) {
+      mm = '0'+mm;
+    }
+
+    let name = req.body.city_name;
+    let date1 = '2013' + '-' + mm + '-' + dd;
+    let date2 = '2014' + '-' + mm + '-' + dd;
+    let date3 = '2015' + '-' + mm + '-' + dd;
+
+    console.log("Name: " + name);
+    console.log("Date1:" + date1);
+    console.log("Date2:" + date2);
+    console.log("Date3:" + date3);
+
+    queryExecuteWithOracle(`select w_date, aspect, metric_value from ${dbuser}is_affected_by where city_name=:name and (w_date=to_date(:date1,'YYYY-MM-DD') or w_date=to_date(:date2,'YYYY-MM-DD') or w_date=to_date(:date3,'YYYY-MM-DD'))`, [name,date1,date2,date3], passCityWeather)
+      .then((result) => {
+        let newResult = treatCityWeather(result);
+        res.send({
+          "result": newResult
+        })
+      })
+      .catch(err => {
+        res.send({
+          "error": "Some error with the connection setup"
+        })
+      })
+
+  } 
+});
+
+app.post('/get-city-pollution', (req, res) => {
+
+  let body = req.body;
+
+  if ('city_name' in req.body) {
+
+    var today = new Date();
+    var dd = today.getDate();
+    var mm = today.getMonth() + 1;
+
+    if (dd < 10) {
+      dd = '0' + dd;
+    }
+
+    if (mm < 10) {
+      mm = '0'+mm;
+    }
+
+    let name = req.body.city_name;
+    let date1 = '2013' + '-' + mm + '-' + dd;
+    let date2 = '2014' + '-' + mm + '-' + dd;
+    let date3 = '2015' + '-' + mm + '-' + dd;
+
+    console.log("Name: " + name);
+    console.log("Date1:" + date1);
+    console.log("Date2:" + date2);
+    console.log("Date3:" + date3);
+
+    queryExecuteWithOracle(`select po_date,symbol, mean_value, max_value, max_hour, aqi from ${dbuser}is_polluted_by where city_name=:name and (po_date=to_date(:date1,'YYYY-MM-DD') or po_date=to_date(:date2,'YYYY-MM-DD') or po_date=to_date(:date3,'YYYY-MM-DD'))`, [name,date1,date2,date3], passCityPollution)
+      .then((result) => {
+        let newResult = treatCityPollution(result);
+        res.send({
+          "result": newResult
+        })
+      })
+      .catch(err => {
+        res.send({
+          "error": "Some error with the connection setup"
+        })
+      })
+
+  } 
+});
+
+app.post('/get-hottest', (req, res) => {
+
+  let body = req.body;
+
+  if ('city_name' in req.body) {
+
+    let name = req.body.city_name;
+
+    console.log("Name: " + name);
+
+    queryExecuteWithOracle(`select w_date, max_val from (select w_date,metric_value as max_val from manika.is_affected_by where city_name=:name and aspect='Temperature') where max_val=( select max(metric_value) from manika.is_affected_by where city_name=:name and aspect='Temperature')`, [name], passHottest)
+      .then((result) => {
+        console.log(result);
+        let newResult = treatHottest(result);
+        res.send({
+          "result": newResult
+        })
+      })
+      .catch(err => {
+        res.send({
+          "error": "Some error with the connection setup"
+        })
+      })
+
+  } 
+});
+
+app.post('/get-coldest', (req, res) => {
+
+  let body = req.body;
+
+  if ('city_name' in req.body) {
+
+    let name = req.body.city_name;
+
+    console.log("Name: " + name);
+
+    queryExecuteWithOracle(`select w_date, min_val from (select w_date,metric_value as min_val from manika.is_affected_by where city_name=:name and aspect='Temperature') where min_val=( select min(metric_value) from manika.is_affected_by where city_name=:name and aspect='Temperature')`, [name], passColdest)
+      .then((result) => {
+        console.log(result);
+        let newResult = treatColdest(result);
+        res.send({
+          "result": newResult
+        })
+      })
+      .catch(err => {
+        res.send({
+          "error": "Some error with the connection setup"
+        })
+      })
+
+  } 
+});
+
+app.post('/get-dry', (req, res) => {
+
+  let body = req.body;
+
+  if ('city_name' in req.body) {
+
+    let name = req.body.city_name;
+
+    console.log("Name: " + name);
+
+    queryExecuteWithOracle(`select w_date, min_val from (select w_date,metric_value as min_val from manika.is_affected_by where city_name=:name and aspect='Humidity') where min_val=( select min(metric_value) from manika.is_affected_by where city_name=:name and aspect='Humidity')`, [name], passDry)
+      .then((result) => {
+        console.log(result);
+        let newResult = treatDry(result);
+        res.send({
+          "result": newResult
+        })
+      })
+      .catch(err => {
+        res.send({
+          "error": "Some error with the connection setup"
+        })
+      })
+
+  } 
+});
+
+app.post('/get-wind', (req, res) => {
+
+  let body = req.body;
+
+  if ('city_name' in req.body) {
+
+    let name = req.body.city_name;
+
+    console.log("Name: " + name);
+
+    queryExecuteWithOracle(`select w_date, max_val from (select w_date,metric_value as max_val from manika.is_affected_by where city_name=:name and aspect='Wind Speed') where max_val=( select max(metric_value) from manika.is_affected_by where city_name=:name and aspect='Wind Speed')`, [name], passWind)
+      .then((result) => {
+        console.log(result);
+        let newResult = treatWind(result);
+        res.send({
+          "result": newResult
+        })
+      })
+      .catch(err => {
+        res.send({
+          "error": "Some error with the connection setup"
+        })
+      })
+
+  } 
+});
+
+
+//////////////////////////// CHRIS' code ends
+
+
+
+////////////////////////////////// CHRIS K code 
+
+fire_data = result => {
+  
+
+  if (result.length === 0) {
+    return {
+      error: "No data found !"
+    };
+  }
+
+
+  let title;
+
+  // let data = [];
+
+  title = result[0][0];
+
+
+  let data1 = result.map(value => {
+    var d = new Date(value[1]);
+    return [
+      Date.UTC(d.getFullYear(), d.getUTCMonth(), d.getUTCDate()),
+      value[2]
+    ];
+  })
+
+  let data2 = result.map(value => {
+    var d = new Date(value[1]);
+    return [
+      Date.UTC(d.getFullYear(), d.getUTCMonth(), d.getUTCDate()),
+      value[3]*100
+    ];
+  })
+
+  let data3 = result.map(value => {
+    var d = new Date(value[1]);
+    return [
+      Date.UTC(d.getFullYear(), d.getUTCMonth(), d.getUTCDate()),
+      value[4]*10
+    ];
+  })
+    let data4 = result.map(value => {
+    var d = new Date(value[1]);
+    return [
+      Date.UTC(d.getFullYear(), d.getUTCMonth(), d.getUTCDate()),
+      value[5]*10
+    ];
+  })
+
+  let events = []
+
+  result.forEach(value => {
+    const event_type = value[7]
+    var d = new Date(value[1]);
+
+    if (event_type !== null) {
+       if (event_type === 'E') {
+        events.push({
+        color: '#9C27B0', // Red
+        width: 2,
+        // zIndex: 5,
+        //dashStyle: 'Dash',
+        value: Date.UTC(d.getFullYear(), d.getUTCMonth(), d.getUTCDate())
+      })
+
+      }
+
+      else if (event_type === 'F') {
+        events.push({
+        color: '#E91E63', // Red
+        width: 3,
+        //dashStyle: 'Dash',
+        value: Date.UTC(d.getFullYear(), d.getUTCMonth(), d.getUTCDate())
+      })
+
+      }
+      //#
+      else if (event_type === 'G') {
+        events.push({
+        color: '#F44336', // Red
+        width: 5,
+        //dashStyle: 'Dash',
+        value: Date.UTC(d.getFullYear(), d.getUTCMonth(), d.getUTCDate())
+      })
+
+      }
+    }
+  })
+
+  let re =  {
+    title: title,
+    data1: data1,
+    data2: data2,
+    data3: data3,
+    data4: data4,
+    events: events,
+    xAxisName: "Year",
+
+  };
+
+  // console.log(re)
+  return re;
+};
+
+// var reg_name = "'South East'";
+// var s_date = "";
+// var e_date = "";
+var no2_symbol = "'NO2'";
+var o3_symbol = "'O3'";
+var so2_symbol = "'SO2'";
+var co_symbol = "'CO'";
+
+app.post("/get_events", (req, res) => {
+  // console.log("Ye bhais aab", req.body);
+  console.log(req.body.s_date);
+  //TODO copy-paste with other chemicals and join on (po_date)
+  //TODO left-outer-join with event data, and generate chart
+  queryExecuteWithOracle(`
+    select * from (select * from (select * from (select region_name, po_date, avg(m1), avg(m2), avg(m3), avg(m4) from ((select region_name, po_date, city_name, mean_value as m1 from MANIKA.REGION NATURAL JOIN MANIKA.CITY NATURAL JOIN MANIKA.IS_POLLUTED_BY NATURAL JOIN MANIKA.POLLUTANT where symbol = 'NO2') NATURAL JOIN (select region_name, po_date, city_name, mean_value as m2 from MANIKA.REGION NATURAL JOIN MANIKA.CITY NATURAL JOIN MANIKA.IS_POLLUTED_BY NATURAL JOIN MANIKA.POLLUTANT where symbol = 'O3') NATURAL JOIN (select region_name, po_date, city_name, mean_value as m3 from MANIKA.REGION NATURAL JOIN MANIKA.CITY NATURAL JOIN MANIKA.IS_POLLUTED_BY NATURAL JOIN MANIKA.POLLUTANT where symbol = 'SO2') NATURAL JOIN (select region_name, po_date, city_name, mean_value as m4 from MANIKA.REGION NATURAL JOIN MANIKA.CITY NATURAL JOIN MANIKA.IS_POLLUTED_BY NATURAL JOIN MANIKA.POLLUTANT where symbol = 'CO'))  group by region_name, po_date) where region_name = :r1 and po_date BETWEEN TO_DATE (:d1, 'yyyy/mm/dd') AND TO_DATE (:d2, 'yyyy/mm/dd') order by po_date) LEFT FULL OUTER JOIN (select * from MANIKA.EVENT NATURAL JOIN MANIKA.OCCURS_IN where region_name = :r2 and o_date BETWEEN TO_DATE (:d3, 'yyyy/mm/dd') AND TO_DATE (:d4, 'yyyy/mm/dd')) ON o_date = po_date) order by po_date`
+    , [req.body.r_name, req.body.s_date, req.body.e_date, req.body.r_name, req.body.s_date, req.body.e_date], fire_data)
+// req.body.r_name, req.body.s_date, req.body.e_date, req.body.r_name, req.body.s_date, req.body.e_date
+    .then(result => {
+      // console.log(result);
+      res.send({
+        result: result
+      });
+    })
+    .catch(err => {
+      res.send({
+        error: "Some error with the connection setup"
+      });
+    });
+});
+
+
+
+
+///////////////////////////////////////////////////////////////
+
+
 
 
 const PORT = process.env.PORT || 5000;
@@ -668,7 +1291,7 @@ transformTwoAttributes = results => {
   cityName = results[0][0];
 
   yAxisName = `${att1} (${att1Unit}) and ${att2} (${att2Unit})`
-  title = `${cityName} : ${att1} V/S ${att2}`
+  title = `${cityName} : ${att1} vs. ${att2}`
 
   let attData1 = results.map(value => {
     var d = new Date(value[1]);
@@ -700,6 +1323,7 @@ transformTwoAttributes = results => {
   console.log(re)
   return re;
 }
+
 
 transformSearchQueryResults = results => {
   if (results.length === 0) {
@@ -819,7 +1443,7 @@ transformResultForPollutant = (result) => {
 
   yAxisName = `${pName1} (${pSymbol1}) and ${pName2} (${pSymbol2}) and ${pName3} (${pSymbol3}) and ${pName4} (${pSymbol4})`
 
-  title = `${cityName} : ${pSymbol1} V/S ${pSymbol2} V/S ${pSymbol3} V/S ${pSymbol4}`
+  title = `${cityName} : ${pSymbol1} vs. ${pSymbol2} vs. ${pSymbol3} vs. ${pSymbol4}`
 
   let pData1 = result.map(value => {
     var d = new Date(value[0]);

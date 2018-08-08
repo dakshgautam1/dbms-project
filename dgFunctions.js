@@ -9,7 +9,7 @@ const query2 = `select aspect, w_date, m1, city_name1, m2, city_name2, unit from
 const query3 = `select city_name, w_date, aspect1, unit1, m1, aspect2, unit2, m2 from (select v1.city_name as city_name, v1.w_date as w_date, v1.aspect as aspect1, v1.unit as unit1, v1.m as m1, v2.aspect as aspect2, v2.unit as unit2, v2.m as m2 from (select LAST_DAY(TO_DATE(x || y || '-01', 'YYYY-MM-DD')) as w_date, m, city_name, aspect, unit from (select to_char(w_date, 'yyyy') as x, to_char(w_date, 'mm') as y, avg(metric_value) as m, city_name, aspect, unit from MANIKA.CITY NATURAL JOIN MANIKA.IS_AFFECTED_BY NATURAL JOIN MANIKA.WEATHER where aspect = :aspect1 and city_name=:city1 group by to_char(w_date, 'yyyy'), to_char(w_date, 'mm'), city_name, aspect, unit order by to_char(w_date, 'yyyy'))) v1 FULL OUTER JOIN (select LAST_DAY(TO_DATE(x || y || '-01', 'YYYY-MM-DD')) as w_date, m, city_name, aspect, unit from (select to_char(w_date, 'yyyy') as x, to_char(w_date, 'mm') as y, avg(metric_value) as m, city_name, aspect, unit from MANIKA.CITY NATURAL JOIN MANIKA.IS_AFFECTED_BY NATURAL JOIN MANIKA.WEATHER where aspect = :aspect2 and city_name= :city2 group by to_char(w_date, 'yyyy'), to_char(w_date, 'mm'), city_name, aspect, unit order by to_char(w_date, 'yyyy'))) v2 ON v1.w_date = v2.w_date)`;
 
 
-const firstUpperCase = input => input[0].toUpperCase() + input.substr(1);
+const firstUpperCase = str => str.replace(/\w\S*/g, function(txt){return txt.charAt(0).toUpperCase() + txt.substr(1).toLowerCase();});;
 
 const appendWhereArguments = (argumentKey, argumentValues) =>
   `${argumentKey} = :${argumentValues}`;
@@ -30,7 +30,7 @@ const handleDatesClause = (query, queryArguments, dates, appendAnd=true) => {
         } else {
           query += ` to_char(W_DATE, 'mm') = :f1`;
         }
-        queryArguments.push(d.getMonth());
+        queryArguments.push(d.getMonth() + 1);
       } else {
         // handling for year only. 
         if (appendAnd) {
